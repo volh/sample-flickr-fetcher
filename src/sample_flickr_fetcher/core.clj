@@ -49,12 +49,15 @@
 (defn resize-image
   [url width height]
   (println (str "resizing " url ))
-  (let [img     (read-image url)
-        new-img (BufferedImage. width height BufferedImage/TYPE_INT_ARGB)
-        g       (.createGraphics new-img)]
-    (.drawImage g img 0 0 width height nil)
-    (.dispose g)
-    (javax.imageio.ImageIO/write new-img "png" (io/file (image-file-name url)))))
+  (try
+    (let [img     (read-image url)
+          new-img (BufferedImage. width height BufferedImage/TYPE_INT_ARGB)
+          g       (.createGraphics new-img)]
+      (.drawImage g img 0 0 width height nil)
+      (.dispose g)
+      (javax.imageio.ImageIO/write new-img "png" (io/file (image-file-name url))))
+    (catch Exception ex
+      (println (str "resizing image failed: " (.getMessage ex))))))
 
 (defn resize-images [width height urls]
   (mapv #(resize-image % width height) urls))
@@ -76,14 +79,12 @@
         width  (Integer/parseInt (:width params))
         height (Integer/parseInt (:height params))]
     (if (and width height)
-      (try
-        (do
-          (download-feed (partial process-images width height))
-          {:status  200
-           :headers {"Content-Type" "text/html"}
-           :body    (str "Downloading flickr images using " width " and " height " dimensions")})
-           (catch Exception ex
-      (str "resizing image failed: " (.getMessage ex))))
+      (do
+        (download-feed (partial process-images width height))
+        {:status  200
+         :headers {"Content-Type" "text/html"}
+         :body    (str "Downloading flickr images using " width " and " height " dimensions")})
+
       {:status  200
        :headers {"Content-Type" "text/html"}
        :body    "Please specify width and height arguments"})))
