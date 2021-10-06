@@ -73,8 +73,8 @@
 
 (defn flickr-feed-save-images-handler [req]
   (let [params (:params req)
-        width  (:width params)
-        height (:height params)]
+        width  (Integer/parseInt (:width params))
+        height (Integer/parseInt (:height params))]
     (if (and width height)
       (try
         (do
